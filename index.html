@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8"/>
+  <title>Panecoバーコードプロトタイプ</title>
+  <!-- バーコード生成ライブラリ -->
+  <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+  <!-- バーコード読み取りライブラリ -->
+  <script src="https://unpkg.com/@zxing/library@0.19.1/umd/index.min.js"></script>
+  <style>
+    body { font-family: sans-serif; padding: 1rem; }
+    #scanner { width: 100%; max-width: 400px; height: 300px; margin-top:1rem; border:1px solid #ccc; }
+    svg { margin-top:1rem; }
+    button { margin-left: .5rem; }
+  </style>
+</head>
+<body>
+  <h2>バーコード生成</h2>
+  <input id="url" type="text" value="https://paneco.tokyo/" style="width:80%;" readonly/>
+  <button id="gen">Generate</button>
+  <br/>
+  <svg id="barcode"></svg>
+
+  <h2>バーコード読み取り</h2>
+  <video id="scanner" muted playsinline></video>
+
+  <script>
+    // 1) 生成
+    document.getElementById('gen').addEventListener('click', () => {
+      JsBarcode("#barcode", document.getElementById('url').value, {
+        format: "CODE128", width:2, height:80, displayValue: false
+      });
+    });
+    // 最初に一度生成
+    document.getElementById('gen').click();
+
+    // 2) 読み取り
+    const codeReader = new ZXing.BrowserBarcodeReader();
+    codeReader.decodeFromVideoDevice(
+      /* カメラ */ null,
+      /* video 要素 */ 'scanner',
+      (result, err) => {
+        if (result) {
+          // バーコードを検知したら常にpaneco.tokyoに移動
+          codeReader.reset();
+          window.location.href = "https://paneco.tokyo/";
+        }
+      }
+    );
+  </script>
+</body>
+</html>
