@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>バーコード管理</title>
+  <!-- バーコード生成ライブラリ -->
+  <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+  <style>
+    body { 
+      font-family: sans-serif; 
+      padding: 1rem;
+      margin: 0;
+      max-width: 100%;
+      overflow-x: hidden;
+    }
+    .container {
+      max-width: 100%;
+      margin: 0 auto;
+      padding: 0 1rem;
+    }
+    .barcode-list {
+      margin-top: 2rem;
+    }
+    .barcode-item {
+      margin-bottom: 1rem;
+      padding: 1rem;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+    }
+    .barcode-item input {
+      width: 70%;
+      margin-right: 1rem;
+    }
+    button { 
+      margin-left: .5rem;
+      padding: 0.5rem 1rem;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #45a049;
+    }
+    .delete-btn {
+      background-color: #f44336;
+    }
+    .delete-btn:hover {
+      background-color: #d32f2f;
+    }
+    .back-link {
+      position: fixed;
+      bottom: 1rem;
+      right: 1rem;
+      background-color: #2196F3;
+      color: white;
+      padding: 0.5rem 1rem;
+      border-radius: 4px;
+      text-decoration: none;
+    }
+    #barcodePreview {
+      margin-top: 1rem;
+      max-width: 100%;
+      height: auto;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>バーコード管理</h2>
+    <div class="barcode-list" id="barcodeList">
+      <!-- バーコード項目はJavaScriptで動的に追加 -->
+    </div>
+    <button id="addBarcode">新しいバーコードを追加</button>
+    <svg id="barcodePreview"></svg>
+    <a href="index.html" class="back-link">スキャン画面へ戻る</a>
+  </div>
+
+  <script>
+    // バーコードとURLの対応表
+    let barcodeMap = {};
+
+    // ローカルストレージからバーコードマップを読み込む
+    function loadBarcodeMap() {
+      const savedMap = localStorage.getItem('barcodeMap');
+      if (savedMap) {
+        barcodeMap = JSON.parse(savedMap);
+        updateBarcodeList();
+      }
+    }
+
+    // バーコードマップを保存
+    function saveBarcodeMap() {
+      localStorage.setItem('barcodeMap', JSON.stringify(barcodeMap));
+    }
+
+    // バーコードリストを更新
+    function updateBarcodeList() {
+      const list = document.getElementById('barcodeList');
+      list.innerHTML = '';
+      
+      Object.entries(barcodeMap).forEach(([barcode, url]) => {
+        const item = document.createElement('div');
+        item.className = 'barcode-item';
+        item.innerHTML = `
+          <input type="text" value="${barcode}" readonly>
+          <input type="text" value="${url}" readonly>
+          <button onclick="deleteBarcode('${barcode}')" class="delete-btn">削除</button>
+          <button onclick="generateBarcode('${barcode}')">バーコード生成</button>
+        `;
+        list.appendChild(item);
+      });
+    }
+
+    // バーコードを削除
+    function deleteBarcode(barcode) {
+      if (confirm('このバーコードを削除してもよろしいですか？')) {
+        delete barcodeMap[barcode];
+        saveBarcodeMap();
+        updateBarcodeList();
+      }
+    }
+
+    // バーコードを生成
+    function generateBarcode(barcode) {
+      JsBarcode("#barcodePreview", barcode, {
+        format: "CODE128", width:2, height:80, displayValue: false
+      });
+    }
+
+    // 新しいバーコードを追加
+    document.getElementById('addBarcode').addEventListener('click', () => {
+      const barcode = prompt('バーコードの値を入力してください:');
+      if (barcode) {
+        const url = prompt('遷移先のURLを入力してください:');
+        if (url) {
+          barcodeMap[barcode] = url;
+          saveBarcodeMap();
+          updateBarcodeList();
+        }
+      }
+    });
+
+    // 初期読み込み
+    loadBarcodeList();
+  </script>
+</body>
+</html> 
