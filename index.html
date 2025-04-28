@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Panecoバーコードプロトタイプ</title>
+  <title>バーコードリダイレクト</title>
   <!-- バーコード生成ライブラリ -->
   <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
   <!-- バーコード読み取りライブラリ -->
@@ -70,15 +70,28 @@
     .scanner-active .close-scanner {
       display: block;
     }
+    .barcode-list {
+      margin-top: 2rem;
+    }
+    .barcode-item {
+      margin-bottom: 1rem;
+      padding: 1rem;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+    }
+    .barcode-item input {
+      width: 70%;
+      margin-right: 1rem;
+    }
   </style>
 </head>
 <body>
   <div class="container">
-    <h2>バーコード生成</h2>
-    <input id="url" type="text" value="https://paneco.tokyo/" style="width:80%;" readonly/>
-    <button id="gen">Generate</button>
-    <br/>
-    <svg id="barcode"></svg>
+    <h2>バーコード管理</h2>
+    <div class="barcode-list" id="barcodeList">
+      <!-- バーコード項目はJavaScriptで動的に追加 -->
+    </div>
+    <button id="addBarcode">新しいバーコードを追加</button>
 
     <h2>バーコード読み取り</h2>
     <button id="startScanner">カメラを起動</button>
@@ -87,16 +100,74 @@
   </div>
 
   <script>
-    // 1) 生成
-    document.getElementById('gen').addEventListener('click', () => {
-      JsBarcode("#barcode", document.getElementById('url').value, {
+    // バーコードとURLの対応表
+    let barcodeMap = {
+      // 例：'123456789': 'https://example.com'
+    };
+
+    // ローカルストレージからバーコードマップを読み込む
+    function loadBarcodeMap() {
+      const savedMap = localStorage.getItem('barcodeMap');
+      if (savedMap) {
+        barcodeMap = JSON.parse(savedMap);
+        updateBarcodeList();
+      }
+    }
+
+    // バーコードマップを保存
+    function saveBarcodeMap() {
+      localStorage.setItem('barcodeMap', JSON.stringify(barcodeMap));
+    }
+
+    // バーコードリストを更新
+    function updateBarcodeList() {
+      const list = document.getElementById('barcodeList');
+      list.innerHTML = '';
+      
+      Object.entries(barcodeMap).forEach(([barcode, url]) => {
+        const item = document.createElement('div');
+        item.className = 'barcode-item';
+        item.innerHTML = `
+          <input type="text" value="${barcode}" readonly>
+          <input type="text" value="${url}" readonly>
+          <button onclick="deleteBarcode('${barcode}')">削除</button>
+          <button onclick="generateBarcode('${barcode}')">バーコード生成</button>
+        `;
+        list.appendChild(item);
+      });
+    }
+
+    // バーコードを削除
+    function deleteBarcode(barcode) {
+      delete barcodeMap[barcode];
+      saveBarcodeMap();
+      updateBarcodeList();
+    }
+
+    // バーコードを生成
+    function generateBarcode(barcode) {
+      JsBarcode("#barcode", barcode, {
         format: "CODE128", width:2, height:80, displayValue: false
       });
-    });
-    // 最初に一度生成
-    document.getElementById('gen').click();
+    }
 
-    // 2) 読み取り
+    // 新しいバーコードを追加
+    document.getElementById('addBarcode').addEventListener('click', () => {
+      const barcode = prompt('バーコードの値を入力してください:');
+      if (barcode) {
+        const url = prompt('遷移先のURLを入力してください:');
+        if (url) {
+          barcodeMap[barcode] = url;
+          saveBarcodeMap();
+          updateBarcodeList();
+        }
+      }
+    });
+
+    // 初期読み込み
+    loadBarcodeMap();
+
+    // カメラ読み取り
     const codeReader = new ZXing.BrowserBarcodeReader();
     let isScanning = false;
 
@@ -108,9 +179,14 @@
           /* video 要素 */ 'scanner',
           (result, err) => {
             if (result) {
-              // バーコードを検知したら常にpaneco.tokyoに移動
-              codeReader.reset();
-              window.location.href = "https://paneco.tokyo/";
+              const barcode = result.getText();
+              if (barcodeMap[barcode]) {
+                // 対応するURLに遷移
+                codeReader.reset();
+                window.location.href = barcodeMap[barcode];
+              } else {
+                alert('登録されていないバーコードです');
+              }
             }
           }
         );
