@@ -65,6 +65,12 @@
       max-width: 100%;
       height: auto;
     }
+    .download-btn {
+      background-color: #2196F3;
+    }
+    .download-btn:hover {
+      background-color: #1976D2;
+    }
   </style>
 </head>
 <body>
@@ -109,6 +115,7 @@
           <input type="text" value="${url}" readonly>
           <button onclick="deleteBarcode('${barcode}')" class="delete-btn">削除</button>
           <button onclick="generateBarcode('${barcode}')">バーコード生成</button>
+          <button onclick="downloadBarcode('${barcode}')" class="download-btn">SVGダウンロード</button>
         `;
         list.appendChild(item);
       });
@@ -130,10 +137,40 @@
       });
     }
 
+    // SVGをダウンロード
+    function downloadBarcode(barcode) {
+      // 一時的なSVG要素を作成
+      const tempSvg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+      JsBarcode(tempSvg, barcode, {
+        format: "CODE128", width:2, height:80, displayValue: false
+      });
+      
+      // SVGを文字列に変換
+      const svgData = new XMLSerializer().serializeToString(tempSvg);
+      
+      // Blobを作成
+      const blob = new Blob([svgData], {type: "image/svg+xml"});
+      
+      // ダウンロードリンクを作成
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `barcode_${barcode}.svg`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    }
+
     // 新しいバーコードを追加
     document.getElementById('addBarcode').addEventListener('click', () => {
-      const barcode = prompt('バーコードの値を入力してください:');
+      const barcode = prompt('バーコードの値を入力してください（10桁の数字）:');
       if (barcode) {
+        // 10桁の数字かどうかをチェック
+        if (!/^\d{10}$/.test(barcode)) {
+          alert('10桁の数字を入力してください');
+          return;
+        }
         const url = prompt('遷移先のURLを入力してください:');
         if (url) {
           barcodeMap[barcode] = url;
@@ -144,7 +181,7 @@
     });
 
     // 初期読み込み
-    loadBarcodeList();
+    loadBarcodeMap();
   </script>
 </body>
 </html> 
