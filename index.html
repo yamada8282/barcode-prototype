@@ -9,54 +9,88 @@
   <style>
     body { 
       font-family: sans-serif; 
-      padding: 1rem;
+      padding: 0;
       margin: 0;
-      max-width: 100%;
-      overflow-x: hidden;
+      width: 1080px;
+      height: 1920px;
+      overflow: hidden;
+      background-color: white;
+      position: relative;
     }
     .container {
-      max-width: 100%;
-      margin: 0 auto;
-      padding: 0 1rem;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      box-sizing: border-box;
+    }
+    h1 {
+      font-size: 4rem;
+      margin-bottom: 2rem;
+      color: #333;
+      font-weight: normal;
+    }
+    h2 {
+      font-size: 2.5rem;
+      margin-bottom: 2rem;
+      color: #333;
+    }
+    h3 {
+      font-size: 1.8rem;
+      margin-bottom: 1rem;
+      color: #e74c3c;
+      font-weight: normal;
+    }
+    .instruction {
+      color: #e74c3c;
+      font-size: 1.5rem;
+      margin: 2rem 0;
+      text-align: center;
     }
     #scanner { 
-      width: 100%;
-      height: 300px;
-      margin-top: 1rem;
-      border: 1px solid #ccc;
+      width: 800px;
+      height: 800px;
+      margin: 2rem 0;
+      border: none;
       display: none;
       position: fixed;
-      top: 0;
-      left: 0;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
       z-index: 1000;
+      background-color: #777;
     }
     .scanner-active #scanner {
       display: block;
     }
     button { 
-      margin-left: .5rem;
-      padding: 0.5rem 1rem;
-      background-color: #4CAF50;
-      color: white;
+      font-size: 1.5rem;
+      padding: 1rem 2rem;
+      background-color: #a9e4f0;
+      color: black;
       border: none;
-      border-radius: 4px;
+      border-radius: 30px;
       cursor: pointer;
+      margin: 1rem;
+      min-width: 300px;
     }
     button:hover {
-      background-color: #45a049;
+      background-color: #8cd9e8;
     }
     .close-scanner {
       position: fixed;
-      top: 1rem;
-      right: 1rem;
+      top: 2rem;
+      right: 2rem;
       z-index: 1001;
       background-color: #f44336;
       color: white;
       border: none;
       border-radius: 50%;
-      width: 40px;
-      height: 40px;
-      font-size: 20px;
+      width: 80px;
+      height: 80px;
+      font-size: 40px;
       cursor: pointer;
       display: none;
     }
@@ -65,50 +99,151 @@
     }
     .admin-link {
       position: fixed;
-      bottom: 1rem;
-      right: 1rem;
-      background-color: #2196F3;
-      color: white;
-      padding: 0.5rem 1rem;
-      border-radius: 4px;
+      top: 2rem;
+      right: 2rem;
+      background-color: #e0e0e0;
+      color: black;
+      padding: 1rem 2rem;
+      border-radius: 30px;
       text-decoration: none;
+      font-size: 1.2rem;
+    }
+    #result {
+      width: 90%;
+      padding: 2rem;
+      border-radius: 8px;
+      background-color: white;
+      display: none;
+      text-align: center;
+    }
+    #resultTitle {
+      font-size: 4rem;
+      margin-bottom: 2rem;
+    }
+    .camera-placeholder {
+      width: 600px;
+      height: 400px;
+      background-color: #777;
+      margin-bottom: 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 2rem;
+    }
+    .arrow-down {
+      width: 40px;
+      height: 80px;
+      border-left: 2px solid #333;
+      border-bottom: 2px solid #333;
+      transform: rotate(-45deg);
+      margin: 2rem auto;
+      display: block;
+    }
+    #scanView, #startView, #resultView {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      position: absolute;
+      top: 0;
+      left: 0;
+    }
+    #scanView, #resultView {
+      display: none;
+    }
+    .website-preview {
+      width: 700px;
+      height: 400px;
+      border: 1px solid #ddd;
+      margin-top: 2rem;
+      overflow: hidden;
+    }
+    .website-preview img {
+      width: 100%;
+      height: auto;
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h2>バーコードスキャン</h2>
-    <button id="startScanner">カメラを起動</button>
-    <video id="scanner" muted playsinline></video>
+  <a href="admin.html" class="admin-link">管理画面へ</a>
+  
+  <!-- スタート画面 -->
+  <div id="startView" class="container">
+    <h1>素材ピンポン</h1>
+    <button id="startScannerBtn">スキャナーを起動する</button>
+  </div>
+
+  <!-- スキャン画面 -->
+  <div id="scanView" class="container">
+    <h3>カメラ映像</h3>
+    <div class="camera-placeholder" id="cameraPlaceholder">
+      <video id="scanner" muted playsinline></video>
+    </div>
+    <p class="instruction">点滅してほしい</p>
+    <p class="instruction">ラケットのバーコードをスキャンしてください</p>
+    <div class="arrow-down"></div>
     <button class="close-scanner" id="closeScanner">×</button>
-    <a href="admin.html" class="admin-link">管理画面へ</a>
+  </div>
+
+  <!-- 結果画面 -->
+  <div id="resultView" class="container">
+    <h3>バーコードと連動したタイトル</h3>
+    <h1 id="resultTitle">タイトルが表示されます</h1>
+    
+    <h3>連動したURL先のwebサイト</h3>
+    <div class="website-preview" id="websitePreview">
+      <!-- ここにプレビュー画像や埋め込みコンテンツが表示されます -->
+    </div>
+    <button id="backToStartBtn">戻る</button>
   </div>
 
   <script>
-    // バーコードとURLの対応表を読み込む
-    let barcodeMap = {};
-    const savedMap = localStorage.getItem('barcodeMap');
-    if (savedMap) {
-      barcodeMap = JSON.parse(savedMap);
+    // 各画面の要素
+    const startView = document.getElementById('startView');
+    const scanView = document.getElementById('scanView');
+    const resultView = document.getElementById('resultView');
+    
+    // バーコードとデータの対応表を読み込む
+    let barcodeData = {};
+    const savedData = localStorage.getItem('barcodeData');
+    if (savedData) {
+      barcodeData = JSON.parse(savedData);
     }
 
     // カメラ読み取り
     const codeReader = new ZXing.BrowserBarcodeReader();
     let isScanning = false;
 
-    document.getElementById('startScanner').addEventListener('click', () => {
+    // スキャナー起動ボタン
+    document.getElementById('startScannerBtn').addEventListener('click', () => {
+      startView.style.display = 'none';
+      scanView.style.display = 'flex';
+      startScanner();
+    });
+
+    // 戻るボタン
+    document.getElementById('backToStartBtn').addEventListener('click', () => {
+      resultView.style.display = 'none';
+      startView.style.display = 'flex';
+    });
+
+    // スキャナーを開始
+    function startScanner() {
       if (!isScanning) {
-        document.body.classList.add('scanner-active');
+        document.getElementById('cameraPlaceholder').style.display = 'none';
+        document.getElementById('scanner').style.display = 'block';
         codeReader.decodeFromVideoDevice(
           /* カメラ */ null,
           /* video 要素 */ 'scanner',
           (result, err) => {
             if (result) {
               const barcode = result.getText();
-              if (barcodeMap[barcode]) {
-                // 対応するURLに遷移
-                codeReader.reset();
-                window.location.href = barcodeMap[barcode];
+              if (barcodeData[barcode]) {
+                // 結果を表示
+                showResult(barcode, barcodeData[barcode]);
               } else {
                 alert('登録されていないバーコードです');
               }
@@ -117,13 +252,37 @@
         );
         isScanning = true;
       }
-    });
+    }
 
+    // 結果表示
+    function showResult(barcode, data) {
+      codeReader.reset();
+      isScanning = false;
+      
+      // 結果画面を表示
+      scanView.style.display = 'none';
+      resultView.style.display = 'flex';
+      
+      // タイトルを表示
+      document.getElementById('resultTitle').textContent = data.title || 'タイトルなし';
+      
+      // URLプレビューを表示
+      const previewContainer = document.getElementById('websitePreview');
+      if (data.url && data.url.trim() !== '') {
+        // URLのプレビューまたは埋め込み表示
+        previewContainer.innerHTML = `<iframe src="${data.url}" width="100%" height="100%" frameborder="0"></iframe>`;
+      } else {
+        previewContainer.innerHTML = '<p>URLが設定されていません</p>';
+      }
+    }
+
+    // スキャナーを閉じる
     document.getElementById('closeScanner').addEventListener('click', () => {
       if (isScanning) {
         codeReader.reset();
-        document.body.classList.remove('scanner-active');
         isScanning = false;
+        scanView.style.display = 'none';
+        startView.style.display = 'flex';
       }
     });
   </script>
