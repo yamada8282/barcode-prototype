@@ -64,20 +64,16 @@
     button:hover {
       background-color: #8cd9e8;
     }
-    .close-scanner {
-      position: fixed;
-      top: 2rem;
-      right: 2rem;
-      z-index: 1001;
-      background-color: #f44336;
-      color: white;
+    .back-button {
+      font-size: 1.5rem;
+      padding: 1rem 2rem;
+      background-color: #a9e4f0;
+      color: black;
       border: none;
-      border-radius: 50%;
-      width: 80px;
-      height: 80px;
-      font-size: 40px;
+      border-radius: 30px;
       cursor: pointer;
-      display: none;
+      min-width: 200px;
+      margin-top: 2rem;
     }
     .admin-link {
       position: fixed;
@@ -89,18 +85,6 @@
       border-radius: 30px;
       text-decoration: none;
       font-size: 1.2rem;
-    }
-    #result {
-      width: 90%;
-      padding: 2rem;
-      border-radius: 8px;
-      background-color: white;
-      display: none;
-      text-align: center;
-    }
-    #resultTitle {
-      font-size: 4rem;
-      margin-bottom: 2rem;
     }
     .camera-container {
       width: 600px;
@@ -144,25 +128,31 @@
     #scanView, #resultView {
       display: none;
     }
-    .website-preview {
+    .website-container {
       width: 700px;
-      height: 400px;
-      border: 1px solid #ddd;
-      margin-top: 2rem;
+      height: 1000px;
+      margin-top: 1rem;
       overflow: hidden;
+      border: 1px solid #ddd;
     }
-    .website-preview img {
+    .website-frame {
       width: 100%;
-      height: auto;
+      height: 100%;
+      border: none;
     }
-    #startScannerBtn {
-      margin-bottom: 1rem;
+    #resultTitle {
+      font-size: 3.5rem;
+      text-align: center;
+      margin: 0.5rem 0;
     }
     .barcode-instruction {
       font-size: 1.5rem;
       text-align: center;
       margin: 1rem 0;
       color: #333;
+    }
+    #startScannerBtn {
+      margin-bottom: 1rem;
     }
   </style>
 </head>
@@ -189,14 +179,13 @@
 
   <!-- 結果画面 -->
   <div id="resultView" class="container">
-    <h3>バーコードと連動したタイトル</h3>
-    <h1 id="resultTitle">タイトルが表示されます</h1>
+    <h1 id="resultTitle">PANECO</h1>
     
-    <h3>連動したURL先のwebサイト</h3>
-    <div class="website-preview" id="websitePreview">
-      <!-- ここにプレビュー画像や埋め込みコンテンツが表示されます -->
+    <div class="website-container">
+      <iframe id="websiteFrame" class="website-frame" frameborder="0"></iframe>
     </div>
-    <button id="backToStartBtn">最初に戻る</button>
+    
+    <button class="back-button" id="backToStartBtn">最初に戻る</button>
   </div>
 
   <script>
@@ -263,13 +252,12 @@
       // タイトルを表示
       document.getElementById('resultTitle').textContent = data.title || 'タイトルなし';
       
-      // URLプレビューを表示
-      const previewContainer = document.getElementById('websitePreview');
+      // Webサイトを表示
+      const iframe = document.getElementById('websiteFrame');
       if (data.url && data.url.trim() !== '') {
-        // URLのプレビューまたは埋め込み表示
-        previewContainer.innerHTML = `<iframe src="${data.url}" width="100%" height="100%" frameborder="0"></iframe>`;
+        iframe.src = data.url;
       } else {
-        previewContainer.innerHTML = '<p>URLが設定されていません</p>';
+        iframe.srcdoc = '<div style="padding:20px; text-align:center;"><p>URLが設定されていません</p></div>';
       }
     }
   </script>
