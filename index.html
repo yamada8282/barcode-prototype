@@ -286,7 +286,9 @@
             }
           }
         }
+        console.log('読み込まれたデータ: ' + Object.keys(barcodeData).length + '件');
       } catch (e) {
+        console.error('データ解析エラー: ' + e.message);
         if (debug) {
           debugLog('データ解析エラー: ' + e.message);
         }
@@ -295,6 +297,7 @@
         barcodeData = {};
       }
     } else {
+      console.log('データが見つかりません');
       if (debug) {
         debugLog('データが見つかりません');
       }
@@ -308,6 +311,7 @@
         text: 'これはサンプルテキストです'
       };
       localStorage.setItem('barcodeData', JSON.stringify(barcodeData));
+      console.log('サンプルデータを追加しました: 1234567890');
       if (debug) {
         debugLog('サンプルデータを追加しました: 1234567890');
       }
@@ -336,8 +340,19 @@
       }
     });
 
-    // カメラ読み取り
-    const codeReader = new ZXing.BrowserBarcodeReader();
+    // カメラ読み取り - ZXingオプションを最適化
+    // willReadFrequently属性を持つキャンバス要素を作成
+    const canvas = document.createElement('canvas');
+    canvas.setAttribute('willReadFrequently', 'true');
+    
+    // ZXingのHTML5生成オプション
+    const options = {
+      delayBetweenScanAttempts: 100,
+      delayBetweenScanSuccess: 500,
+      tryHarder: true,
+    };
+    
+    const codeReader = new ZXing.BrowserBarcodeReader(options);
     let isScanning = false;
 
     // スキャナー起動ボタン
@@ -364,13 +379,17 @@
       if (isScanning) return;
       
       scanStatus.textContent = 'カメラを起動中...';
+      console.log('カメラを起動中...');
       
       // 高度なスキャナー設定
       const hints = new Map();
       hints.set(ZXing.DecodeHintType.TRY_HARDER, true);
       // CODE_128に特化した設定にする（管理画面のバーコード生成と一致）
       hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS, [
-        ZXing.BarcodeFormat.CODE_128
+        ZXing.BarcodeFormat.CODE_128,
+        // 念のため他のフォーマットも試す
+        ZXing.BarcodeFormat.QR_CODE,
+        ZXing.BarcodeFormat.EAN_13
       ]);
       // 精度を最大化
       hints.set(ZXing.DecodeHintType.ASSUME_CODE_39_CHECK_DIGIT, true);
@@ -384,6 +403,8 @@
         (result, err) => {
           if (result) {
             const barcode = result.getText();
+            console.log('スキャンされたバーコード: ' + barcode);
+            
             if (debug) {
               debugLog('スキャンされたバーコード: ' + barcode);
             }
@@ -392,12 +413,15 @@
             
             if (barcodeData[barcode]) {
               // 結果を表示
+              console.log('データ一致: ' + JSON.stringify(barcodeData[barcode]));
               if (debug) {
                 debugLog('データ一致: ' + JSON.stringify(barcodeData[barcode]));
               }
               showResult(barcode, barcodeData[barcode]);
             } else {
               scanStatus.textContent = '登録されていないバーコード: ' + barcode;
+              console.log('データなし: ' + barcode);
+              console.log('登録済みバーコード: ' + Object.keys(barcodeData).join(', '));
               if (debug) {
                 debugLog('データなし: ' + barcode);
                 debugLog('登録済みバーコード: ' + Object.keys(barcodeData).join(', '));
@@ -409,6 +433,7 @@
               scanStatus.textContent = 'バーコードを探しています...';
             } else {
               scanStatus.textContent = 'エラー: ' + err;
+              console.error('エラー: ' + err);
               if (debug) {
                 debugLog('エラー: ' + err);
               }
@@ -419,11 +444,13 @@
       ).then(() => {
         isScanning = true;
         scanStatus.textContent = 'スキャン中...';
+        console.log('カメラ起動成功');
         if (debug) {
           debugLog('カメラ起動成功');
         }
       }).catch(err => {
         scanStatus.textContent = 'カメラ起動失敗: ' + err;
+        console.error('カメラ起動失敗: ' + err);
         if (debug) {
           debugLog('カメラ起動失敗: ' + err);
         }
