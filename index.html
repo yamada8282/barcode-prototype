@@ -40,30 +40,15 @@
     h3 {
       font-size: 1.8rem;
       margin-bottom: 1rem;
-      color: #e74c3c;
+      color: #333;
       font-weight: normal;
     }
-    .instruction {
-      color: #e74c3c;
-      font-size: 1.5rem;
-      margin: 2rem 0;
-      text-align: center;
-    }
     #scanner { 
-      width: 800px;
-      height: 800px;
-      margin: 2rem 0;
+      width: 600px;
+      height: 400px;
       border: none;
-      display: none;
-      position: fixed;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      z-index: 1000;
-      background-color: #777;
-    }
-    .scanner-active #scanner {
       display: block;
+      background-color: #777;
     }
     button { 
       font-size: 1.5rem;
@@ -94,9 +79,6 @@
       cursor: pointer;
       display: none;
     }
-    .scanner-active .close-scanner {
-      display: block;
-    }
     .admin-link {
       position: fixed;
       top: 2rem;
@@ -120,25 +102,33 @@
       font-size: 4rem;
       margin-bottom: 2rem;
     }
-    .camera-placeholder {
+    .camera-container {
       width: 600px;
       height: 400px;
+      margin: 2rem 0;
       background-color: #777;
-      margin-bottom: 2rem;
       display: flex;
       align-items: center;
       justify-content: center;
-      color: white;
-      font-size: 2rem;
+      position: relative;
     }
     .arrow-down {
-      width: 40px;
+      width: 2px;
       height: 80px;
-      border-left: 2px solid #333;
-      border-bottom: 2px solid #333;
-      transform: rotate(-45deg);
+      background-color: #333;
       margin: 2rem auto;
-      display: block;
+      position: relative;
+    }
+    .arrow-down::after {
+      content: "";
+      width: 20px;
+      height: 20px;
+      border-right: 2px solid #333;
+      border-bottom: 2px solid #333;
+      transform: rotate(45deg);
+      position: absolute;
+      bottom: -10px;
+      left: -9px;
     }
     #scanView, #startView, #resultView {
       width: 100%;
@@ -165,6 +155,15 @@
       width: 100%;
       height: auto;
     }
+    #startScannerBtn {
+      margin-bottom: 1rem;
+    }
+    .barcode-instruction {
+      font-size: 1.5rem;
+      text-align: center;
+      margin: 1rem 0;
+      color: #333;
+    }
   </style>
 </head>
 <body>
@@ -179,13 +178,13 @@
   <!-- スキャン画面 -->
   <div id="scanView" class="container">
     <h3>カメラ映像</h3>
-    <div class="camera-placeholder" id="cameraPlaceholder">
+    <div class="camera-container">
       <video id="scanner" muted playsinline></video>
     </div>
-    <p class="instruction">点滅してほしい</p>
-    <p class="instruction">ラケットのバーコードをスキャンしてください</p>
+    
+    <p class="barcode-instruction">ラケットのバーコードをスキャンしてください</p>
+    
     <div class="arrow-down"></div>
-    <button class="close-scanner" id="closeScanner">×</button>
   </div>
 
   <!-- 結果画面 -->
@@ -197,7 +196,7 @@
     <div class="website-preview" id="websitePreview">
       <!-- ここにプレビュー画像や埋め込みコンテンツが表示されます -->
     </div>
-    <button id="backToStartBtn">戻る</button>
+    <button id="backToStartBtn">最初に戻る</button>
   </div>
 
   <script>
@@ -233,8 +232,6 @@
     // スキャナーを開始
     function startScanner() {
       if (!isScanning) {
-        document.getElementById('cameraPlaceholder').style.display = 'none';
-        document.getElementById('scanner').style.display = 'block';
         codeReader.decodeFromVideoDevice(
           /* カメラ */ null,
           /* video 要素 */ 'scanner',
@@ -275,16 +272,6 @@
         previewContainer.innerHTML = '<p>URLが設定されていません</p>';
       }
     }
-
-    // スキャナーを閉じる
-    document.getElementById('closeScanner').addEventListener('click', () => {
-      if (isScanning) {
-        codeReader.reset();
-        isScanning = false;
-        scanView.style.display = 'none';
-        startView.style.display = 'flex';
-      }
-    });
   </script>
 </body>
 </html>
