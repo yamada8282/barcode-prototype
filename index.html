@@ -28,7 +28,7 @@
     }
     h1 {
       font-size: 4rem;
-      margin-bottom: 2rem;
+      margin-bottom: 0.5rem;
       color: #333;
       font-weight: normal;
     }
@@ -44,11 +44,12 @@
       font-weight: normal;
     }
     #scanner { 
-      width: 600px;
-      height: 400px;
+      width: 100%;
+      height: 100%;
       border: none;
       display: block;
       background-color: #777;
+      object-fit: cover;
     }
     button { 
       font-size: 1.5rem;
@@ -91,11 +92,12 @@
       width: 600px;
       height: 400px;
       margin: 2rem 0;
-      background-color: #777;
+      background-color: #000;
       display: flex;
       align-items: center;
       justify-content: center;
       position: relative;
+      overflow: hidden;
     }
     .arrow-down {
       width: 2px;
@@ -144,7 +146,13 @@
     #resultTitle {
       font-size: 3.5rem;
       text-align: center;
-      margin: 0.5rem 0;
+      margin: 0.5rem 0 0 0;
+    }
+    #resultCaption {
+      font-size: 1.5rem;
+      text-align: center;
+      margin: 0.5rem 0 1.5rem 0;
+      color: #666;
     }
     .barcode-instruction {
       font-size: 1.5rem;
@@ -172,6 +180,28 @@
       font-size: 1.2rem;
       color: #333;
     }
+    .scanning-mark {
+      position: absolute;
+      top: 50%;
+      left: 0;
+      width: 100%;
+      height: 4px;
+      background-color: rgba(255, 0, 0, 0.5);
+      animation: scan 2s linear infinite;
+    }
+    @keyframes scan {
+      0% {
+        transform: translateY(-100px);
+      }
+      100% {
+        transform: translateY(100px);
+      }
+    }
+    .action-buttons {
+      display: flex;
+      flex-direction: row;
+      margin-top: 1rem;
+    }
   </style>
 </head>
 <body>
@@ -189,18 +219,23 @@
     <h3>カメラ映像</h3>
     <div class="camera-container">
       <video id="scanner" muted playsinline></video>
+      <div class="scanning-mark"></div>
     </div>
     
     <p class="barcode-instruction">ラケットのバーコードをスキャンしてください</p>
     <p class="scan-status" id="scanStatus"></p>
     
     <div class="arrow-down"></div>
-    <button id="manualInputBtn">バーコードを手動入力</button>
+    <div class="action-buttons">
+      <button id="manualInputBtn">バーコードを手動入力</button>
+      <button id="resetCameraBtn">カメラをリセット</button>
+    </div>
   </div>
 
   <!-- 結果画面 -->
   <div id="resultView" class="screen container">
     <h1 id="resultTitle">PANECO</h1>
+    <p id="resultCaption">説明テキストがここに表示されます</p>
     
     <div class="website-container">
       <iframe id="websiteFrame" class="website-frame" frameborder="0"></iframe>
@@ -238,14 +273,42 @@
     // バーコードとデータの対応表を読み込む
     let barcodeData = {};
     const savedData = localStorage.getItem('barcodeData');
+    
     if (savedData) {
-      barcodeData = JSON.parse(savedData);
-      if (debug) {
-        debugLog('読み込まれたデータ: ' + Object.keys(barcodeData).length + '件');
+      try {
+        barcodeData = JSON.parse(savedData);
+        if (debug) {
+          debugLog('読み込まれたデータ: ' + Object.keys(barcodeData).length + '件');
+          if (Object.keys(barcodeData).length > 0) {
+            for (const [key, value] of Object.entries(barcodeData)) {
+              debugLog(`バーコード: ${key}, タイトル: ${value.title}, URL: ${value.url}`);
+            }
+          }
+        }
+      } catch (e) {
+        if (debug) {
+          debugLog('データ解析エラー: ' + e.message);
+        }
+        // 破損データをクリア
+        localStorage.removeItem('barcodeData');
+        barcodeData = {};
       }
     } else {
       if (debug) {
         debugLog('データが見つかりません');
+      }
+    }
+
+    // サンプルデータの追加（デモ用）
+    if (Object.keys(barcodeData).length === 0) {
+      barcodeData['1234567890'] = {
+        title: 'サンプルタイトル',
+        url: 'https://example.com',
+        text: 'これはサンプルテキストです'
+      };
+      localStorage.setItem('barcodeData', JSON.stringify(barcodeData));
+      if (debug) {
+        debugLog('サンプルデータを追加しました: 1234567890');
       }
     }
 
@@ -258,6 +321,17 @@
         } else {
           alert('登録されていないバーコードです: ' + barcode);
         }
+      }
+    });
+
+    // カメラをリセット
+    document.getElementById('resetCameraBtn').addEventListener('click', () => {
+      if (isScanning) {
+        codeReader.reset();
+        isScanning = false;
+        setTimeout(() => {
+          startScanner();
+        }, 500);
       }
     });
 
@@ -276,6 +350,12 @@
     document.getElementById('backToStartBtn').addEventListener('click', () => {
       resultView.style.display = 'none';
       startView.style.display = 'flex';
+      
+      // カメラが実行中なら停止
+      if (isScanning) {
+        codeReader.reset();
+        isScanning = false;
+      }
     });
 
     // スキャナーを開始
@@ -287,7 +367,16 @@
       // 高度なスキャナー設定
       const hints = new Map();
       hints.set(ZXing.DecodeHintType.TRY_HARDER, true);
-      hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS, [ZXing.BarcodeFormat.CODE_128]);
+      hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS, [
+        ZXing.BarcodeFormat.CODE_128,
+        ZXing.BarcodeFormat.EAN_13,
+        ZXing.BarcodeFormat.EAN_8,
+        ZXing.BarcodeFormat.CODE_39,
+        ZXing.BarcodeFormat.CODE_93,
+        ZXing.BarcodeFormat.UPC_A,
+        ZXing.BarcodeFormat.UPC_E,
+        ZXing.BarcodeFormat.CODABAR
+      ]);
       
       codeReader.decodeFromVideoDevice(
         /* カメラ */ null,
@@ -338,6 +427,11 @@
         if (debug) {
           debugLog('カメラ起動失敗: ' + err);
         }
+        
+        // モバイル端末の場合、カメラアクセス許可のダイアログが出ない可能性があるため指示を表示
+        if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+          scanStatus.textContent = 'カメラへのアクセスが拒否されました。ブラウザの設定からカメラへのアクセスを許可してください。';
+        }
       });
     }
 
@@ -354,6 +448,9 @@
       
       // タイトルを表示
       document.getElementById('resultTitle').textContent = data.title || 'タイトルなし';
+      
+      // キャプションを表示
+      document.getElementById('resultCaption').textContent = data.text || '';
       
       // Webサイトを表示
       const iframe = document.getElementById('websiteFrame');
