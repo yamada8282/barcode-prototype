@@ -150,7 +150,7 @@
     }
     #resultCaption {
       font-size: 1.5rem;
-      text-align: center;
+      text-align: left;
       margin: 0.5rem auto 1.5rem;
       color: #666;
       width: 700px;
@@ -368,16 +368,15 @@
       // 高度なスキャナー設定
       const hints = new Map();
       hints.set(ZXing.DecodeHintType.TRY_HARDER, true);
+      // CODE_128に特化した設定にする（管理画面のバーコード生成と一致）
       hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS, [
-        ZXing.BarcodeFormat.CODE_128,
-        ZXing.BarcodeFormat.EAN_13,
-        ZXing.BarcodeFormat.EAN_8,
-        ZXing.BarcodeFormat.CODE_39,
-        ZXing.BarcodeFormat.CODE_93,
-        ZXing.BarcodeFormat.UPC_A,
-        ZXing.BarcodeFormat.UPC_E,
-        ZXing.BarcodeFormat.CODABAR
+        ZXing.BarcodeFormat.CODE_128
       ]);
+      // 精度を最大化
+      hints.set(ZXing.DecodeHintType.ASSUME_CODE_39_CHECK_DIGIT, true);
+      hints.set(ZXing.DecodeHintType.PURE_BARCODE, false);
+      // より多くの時間をかけてデコードを試みる
+      hints.set(ZXing.DecodeHintType.OTHER, true);
       
       codeReader.decodeFromVideoDevice(
         /* カメラ */ null,
