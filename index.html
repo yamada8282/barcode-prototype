@@ -85,6 +85,7 @@
       border-radius: 30px;
       text-decoration: none;
       font-size: 1.2rem;
+      z-index: 9999;
     }
     .camera-container {
       width: 600px;
@@ -114,7 +115,7 @@
       bottom: -10px;
       left: -9px;
     }
-    #scanView, #startView, #resultView {
+    .screen {
       width: 100%;
       height: 100%;
       display: flex;
@@ -157,16 +158,17 @@
   </style>
 </head>
 <body>
+  <!-- 管理画面へのリンク - 常に最前面に表示 -->
   <a href="admin.html" class="admin-link">管理画面へ</a>
   
   <!-- スタート画面 -->
-  <div id="startView" class="container">
+  <div id="startView" class="screen container">
     <h1>素材ピンポン</h1>
     <button id="startScannerBtn">スキャナーを起動する</button>
   </div>
 
   <!-- スキャン画面 -->
-  <div id="scanView" class="container">
+  <div id="scanView" class="screen container">
     <h3>カメラ映像</h3>
     <div class="camera-container">
       <video id="scanner" muted playsinline></video>
@@ -178,7 +180,7 @@
   </div>
 
   <!-- 結果画面 -->
-  <div id="resultView" class="container">
+  <div id="resultView" class="screen container">
     <h1 id="resultTitle">PANECO</h1>
     
     <div class="website-container">
